@@ -129,4 +129,22 @@ library RLPUtil {
 
         return proof;
     }
+
+    function DecodeNode(bytes memory nodeData) public returns (bytes[] memory ) {
+        //todo check nodeData
+
+        RLPReader.RLPItem memory obj = nodeData.toRlpItem();
+        RLPReader.RLPItem[] memory items;
+        if (obj.isList()) {
+            items = obj.toList();
+            bytes[] memory childNodes = new bytes[](items.length);
+            for (uint i=0;i<items.length;i++) {
+                childNodes[i] = items[i].toBytes();
+            }
+            return childNodes;
+        } else {
+            //todo
+        }
+
+    }
 }

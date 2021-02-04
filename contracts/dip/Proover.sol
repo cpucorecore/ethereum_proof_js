@@ -62,13 +62,99 @@ contract prover {
         _verify_trie_proof(expected_root, actual_key, proof, 0, 0, expected_value);
     }
 
-    bytes32 public k1;
-
     function _verify_trie_proof(bytes memory expected_root, bytes memory key, bytes[] memory proof, uint key_index, uint proof_index, bytes memory expected_value) internal returns (bool) {
         bytes memory node = proof[proof_index];
+        bytes[] memory dec = RLPUtil.DecodeNode(node);
 
         if (key_index == 0) {
-            k1 = keccak256(node);
+            require(Util.BytesEqual(abi.encodePacked(keccak256(node)), expected_root));
+        } else if (node.length < 32) {
+            require(Util.BytesEqual(node, expected_root));
+        } else {
+            require(Util.BytesEqual(abi.encodePacked(keccak256(node)), expected_root));
         }
+
+
+        if (node.length == 17) {
+            // branch node
+            if (key_index == key.length) {
+                if (Util.BytesEqual(dec[dec.length - 1], expected_value)) {
+                    return true;
+                }
+            } else if (key_index < key.length) {
+                bytes memory new_expected_root = dec[uint8(key[key_index])];
+                if (new_expected_root.length != 0) {
+                    return _verify_trie_proof(
+                        new_expected_root,
+                        key,
+                        proof,
+                        key_index + 1,
+                        proof_index + 1,
+                        expected_value
+                    );
+                }
+            } else {
+                revert(); // This should not be reached if the proof has the correct format
+            }
+        } else if (node.length == 2) {
+            // leaf or extension node
+            bytes memory nibbles = Util.ExtractNibbles(dec[0]);
+            uint prefix = uint8(nibbles[0]);
+            uint8 nibble = uint8(nibbles[1]);
+
+            if (prefix == 2) {
+                // even leaf node
+                bytes memory key_left = Util.SubArray(key, key_index, key.length);
+                if (Util.BytesEqual(Util.ConcatNibbles(Util.SubArray(nibbles, 2, nibbles.length)), key_left) &&
+                    Util.BytesEqual(expected_value, dec[1])) {
+                    return true;
+                }
+
+            } else if (prefix == 3) {
+                // odd leaf node
+                bytes memory key_left = Util.SubArray(key, key_index + 1, key.length);
+                if (nibble == uint8(key[key_index]) &&
+                Util.BytesEqual(Util.ConcatNibbles(Util.SubArray(nibbles, 2, nibbles.length)), key_left) &&
+                    Util.BytesEqual(expected_value, dec[1])) {
+                    return true;
+                }
+
+            } else if (prefix == 0) {
+                // even extension node
+                bytes memory shared_nibbles = Util.SubArray(nibbles, 2, nibbles.length);
+                bytes memory key_left = Util.SubArray(key, key_index, key_index + shared_nibbles.length);
+                if (Util.BytesEqual(Util.ConcatNibbles(shared_nibbles), key_left)) {
+                    return _verify_trie_proof(
+                        dec[1],
+                        key,
+                        proof,
+                        key_index + shared_nibbles.length,
+                        proof_index + 1,
+                        expected_value
+                    );
+                }
+            } else if (prefix == 1) {
+                // odd extension node
+                bytes memory key_left = Util.SubArray(key, key_index + 1, key_index + nibbles.length - 1);
+                if (nibble == uint8(key[key_index]) &&
+                    Util.BytesEqual(Util.ConcatNibbles(Util.SubArray(nibbles, 2, nibbles.length)), key_left)) {
+                    return _verify_trie_proof(
+                        dec[1],
+                        key,
+                        proof,
+                        key_index + nibbles.length - 1,
+                        proof_index + 1,
+                        expected_value
+                    );
+                }
+
+            } else {
+                revert(); // This should not be reached if the proof has the correct format
+            }
+        } else {
+            revert(); // This should not be reached if the proof has the correct format
+        }
+
+        return (expected_value.length == 0);
     }
 }

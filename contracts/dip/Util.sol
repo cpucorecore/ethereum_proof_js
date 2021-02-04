@@ -51,4 +51,21 @@ library Util {
             key[i/2] = nibbles[i] << 4 | nibbles[i+1];
         }
     }
+
+    function SubArray(bytes memory src, uint from, uint to) public pure returns (bytes memory empty) {
+        uint srcLength = src.length;
+        if (srcLength == 0) return empty;
+        if (from >= to) return empty;
+        if (from >= srcLength || to > srcLength) return empty;
+
+        bytes memory result = new bytes(to - from);
+        for(uint i=from;i<to;i++) {
+            result[i] = src[i];
+        }
+
+        return result;
+    }
 }
+
+
+
