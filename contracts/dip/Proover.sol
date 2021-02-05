@@ -155,6 +155,6 @@ contract prover {
             revert(); // This should not be reached if the proof has the correct format
         }
 
-        // return (expected_value.length == 0);
+        return (expected_value.length == 0);
     }
 }

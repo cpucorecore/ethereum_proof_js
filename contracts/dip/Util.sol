@@ -46,27 +46,29 @@ library Util {
     function ConcatNibbles(bytes memory nibbles) public pure returns (bytes memory empty) {
         if (nibbles.length == 0) return empty;
 
-        bytes memory value = new bytes((nibbles.length+1)/2);
-        bytes memory t = new bytes(value.length*2);
+        bytes memory result = new bytes((nibbles.length+1)/2);
+        bytes memory evenNibbles = new bytes(result.length*2);
         if (nibbles.length % 2 == 1) {
-            t[0] = 0;
-            for (uint i=1;i<value.length;i++) {
-                t[i] = nibbles[i-1];
+            evenNibbles[0] = 0;
+            for (uint i=1; i<nibbles.length; i++) {
+                evenNibbles[i] = nibbles[i-1];
             }
         } else {
-            t = nibbles;
+            evenNibbles = nibbles;
         }
 
-        for(uint32 i=0; i<t.length; i=i+2) {
-            value[i/2] = t[i] << 4 | t[i+1];
+        for(uint32 i=0; i<evenNibbles.length; i=i+2) {
+            result[i/2] = evenNibbles[i] << 4 | evenNibbles[i+1];
         }
 
-        return value;
+        return result;
     }
 
     function subarray(bytes memory src, uint startIndex, uint endIndex) public pure returns (bytes memory) {
+        require(endIndex>startIndex);
+        require(endIndex<=src.length);
         bytes memory result = new bytes(endIndex-startIndex);
-        for(uint i = startIndex; i < endIndex; i++) {
+        for(uint i=startIndex; i<endIndex; i++) {
             result[i-startIndex] = src[i];
         }
         return result;
