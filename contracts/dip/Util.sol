@@ -43,26 +43,32 @@ library Util {
         return nibbles;
     }
 
-    function ConcatNibbles(bytes memory nibbles) public pure returns (bytes memory) {
-        require(nibbles.length != 0 && nibbles.length % 2 == 0);
+    function ConcatNibbles(bytes memory nibbles) public pure returns (bytes memory empty) {
+        if (nibbles.length == 0) return empty;
 
-        bytes memory key = new bytes(nibbles.length/2);
-        for(uint32 i=0; i<key.length; i=i+2) {
-            key[i/2] = nibbles[i] << 4 | nibbles[i+1];
+        bytes memory value = new bytes((nibbles.length+1)/2);
+        bytes memory t = new bytes(value.length*2);
+        if (nibbles.length % 2 == 1) {
+            t[0] = 0;
+            for (uint i=1;i<value.length;i++) {
+                t[i] = nibbles[i-1];
+            }
+        } else {
+            t = nibbles;
         }
+
+        for(uint32 i=0; i<t.length; i=i+2) {
+            value[i/2] = t[i] << 4 | t[i+1];
+        }
+
+        return value;
     }
 
-    function SubArray(bytes memory src, uint from, uint to) public pure returns (bytes memory empty) {
-        uint srcLength = src.length;
-        if (srcLength == 0) return empty;
-        if (from >= to) return empty;
-        if (from >= srcLength || to > srcLength) return empty;
-
-        bytes memory result = new bytes(to - from);
-        for(uint i=from;i<to;i++) {
-            result[i] = src[i];
+    function subarray(bytes memory src, uint startIndex, uint endIndex) public pure returns (bytes memory) {
+        bytes memory result = new bytes(endIndex-startIndex);
+        for(uint i = startIndex; i < endIndex; i++) {
+            result[i-startIndex] = src[i];
         }
-
         return result;
     }
 }
