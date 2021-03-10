@@ -49,7 +49,7 @@ contract prover {
     }
 
     bytes public actual_key;
-    function verify_trie_proof(bytes memory expected_root, bytes memory key, bytes[] memory proof, bytes memory expected_value) internal returns (bool) {
+    function verify_trie_proof(bytes32 expected_root, bytes memory key, bytes[] memory proof, bytes memory expected_value) internal returns (bool) {
         actual_key.length = 0;
         for (uint i=0;i<key.length;i++) {
             if (actual_key.length + 1 == proof.length) {
@@ -60,7 +60,7 @@ contract prover {
             }
         }
 
-        _verify_trie_proof(expected_root, actual_key, proof, 0, 0, expected_value);
+        _verify_trie_proof(abi.encodePacked(expected_root), actual_key, proof, 0, 0, expected_value);
     }
 
     function _verify_trie_proof(bytes memory expected_root, bytes memory key, bytes[] memory proof, uint key_index, uint proof_index, bytes memory expected_value) internal returns (bool) {
@@ -74,7 +74,6 @@ contract prover {
         } else {
             require(Util.BytesEqual(abi.encodePacked(keccak256(node)), expected_root));
         }
-
 
         if (dec.length == 17) {
             // branch node

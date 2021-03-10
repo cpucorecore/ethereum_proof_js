@@ -10,12 +10,12 @@ library RLPUtil {
     using RLPReader for bytes;
 
     struct Header {
-        bytes parent_hash;
-        bytes uncles_hash;
+        bytes32 parent_hash;
+        bytes32 uncles_hash;
         address author;
-        bytes state_root;
-        bytes transactions_root;
-        bytes receipts_root;
+        bytes32 state_root;
+        bytes32 transactions_root;
+        bytes32 receipts_root;
         bytes log_bloom;
         bytes difficulty;
         uint number;
@@ -23,8 +23,14 @@ library RLPUtil {
         uint gas_used;
         uint timestamp;
         bytes extra_data;
-        bytes mix_hash;
+        bytes32 mix_hash;
         uint nonce;
+    }
+
+    function bytesToBytes32(bytes memory src) public pure returns (bytes32 dest) {
+        assembly {
+            dest := mload(add(src, 32))
+        }
     }
 
     function DecodeHeader(bytes memory header_data) public pure returns (Header memory) {
@@ -33,12 +39,13 @@ library RLPUtil {
         RLPReader.RLPItem[] memory items = header_data.toRlpItem().toList();
         require(items.length == 15 || items.length == 13);
 
-        header.parent_hash = items[0].toBytes();
-        header.uncles_hash = items[1].toBytes();
+
+        header.parent_hash = bytesToBytes32(items[0].toBytes());
+        header.uncles_hash = bytesToBytes32(items[1].toBytes());
         header.author = items[2].toAddress();
-        header.state_root = items[3].toBytes();
-        header.transactions_root = items[4].toBytes();
-        header.receipts_root = items[5].toBytes();
+        header.state_root = bytesToBytes32(items[3].toBytes());
+        header.transactions_root = bytesToBytes32(items[4].toBytes());
+        header.receipts_root = bytesToBytes32(items[5].toBytes());
         header.log_bloom = items[6].toBytes();
         header.difficulty = items[7].toBytes();
         header.number = items[8].toUint();
