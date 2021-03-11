@@ -17,10 +17,10 @@ library RLPUtil {
         bytes32 transactions_root;
         bytes32 receipts_root;
         bytes log_bloom;
-        bytes difficulty;
-        uint number;
-        uint gas_limit;
-        uint gas_used;
+        uint difficulty;
+        uint64 number;
+        uint64 gas_limit;
+        uint64 gas_used;
         uint timestamp;
         bytes extra_data;
         bytes32 mix_hash;
@@ -47,10 +47,40 @@ library RLPUtil {
         header.transactions_root = bytesToBytes32(items[4].toBytes());
         header.receipts_root = bytesToBytes32(items[5].toBytes());
         header.log_bloom = items[6].toBytes();
-        header.difficulty = items[7].toBytes();
-        header.number = items[8].toUint();
-        header.gas_limit = items[9].toUint();
-        header.gas_used = items[10].toUint();
+        header.difficulty = items[7].toUint();
+        header.number = uint64(items[8].toUint());
+        header.gas_limit = uint64(items[9].toUint());
+        header.gas_used = uint64(items[10].toUint());
+        header.timestamp = items[11].toUint();
+
+        return header;
+    }
+
+    struct HeaderSimple {
+        bytes32 parent_hash;
+        bytes32 receipts_root;
+        uint difficulty;
+        uint64 number;
+        uint64 gas_limit;
+        uint64 gas_used;
+        uint timestamp;
+        bytes32 mix_hash;
+        uint nonce;
+    }
+
+    function DecodeHeaderSimple(bytes memory header_data) public pure returns (HeaderSimple memory) {
+        HeaderSimple memory header;
+
+        RLPReader.RLPItem[] memory items = header_data.toRlpItem().toList();
+        require(items.length == 15 || items.length == 13);
+
+
+        header.parent_hash = bytesToBytes32(items[0].toBytes());
+        header.receipts_root = bytesToBytes32(items[5].toBytes());
+        header.difficulty = items[7].toUint();
+        header.number = uint64(items[8].toUint());
+        header.gas_limit = uint64(items[9].toUint());
+        header.gas_used = uint64(items[10].toUint());
         header.timestamp = items[11].toUint();
 
         return header;
@@ -95,7 +125,7 @@ library RLPUtil {
     }
 
     // test data: 0xf901bd01825bf8b9010000000000000000000000000800000000000000000000000000200000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000401000000000000000000000000000000000000000000000000000000000000000f8b4f85894d389508032869c1701b9dbe3f5fc6df40c488bc7e1a02a056365f90644ba02872f61a1ad37613f47bba498327650b0b3ac40677e66c4a00000000000000000000000000000000000000000000000000000000000000064f85894d389508032869c1701b9dbe3f5fc6df40c488bc7e1a0f81f8171d13ab9fef6d56dec96341eba6a5265cec2002c22bbadc5f19d219720a00000000000000000000000000000000000000000000000000000000000000065
-    function DecodeReceipt(bytes memory receipt_data) public returns (Receipt memory) {
+    function DecodeReceipt(bytes memory receipt_data) public pure returns (Receipt memory) {
         Receipt memory receipt;
 
         RLPReader.RLPItem[] memory items = receipt_data.toRlpItem().toList();
@@ -137,7 +167,7 @@ library RLPUtil {
         return proof;
     }
 
-    function DecodeNode(bytes memory nodeData) public returns (bytes[] memory ) {
+    function DecodeNode(bytes memory nodeData) public pure returns (bytes[] memory ) {
         //todo check nodeData
 
         RLPReader.RLPItem memory obj = nodeData.toRlpItem();
